@@ -5,8 +5,9 @@ import {
   FETCH_LOADING,
   FETCH_ERROR,
   GET_FAVS_FROM_LS,
+  RESET_LOCAL
 } from "./actions";
-
+import { toast } from 'react-toastify';
 const initial = {
   favs: [],
   current: null,
@@ -25,23 +26,54 @@ function readFavsFromLocalStorage() {
 export function myReducer(state = initial, action) {
   switch (action.type) {
     case FAV_ADD:
-      return state;
-
+     
+        if(!state.favs.includes(action.payload)){
+          toast.success('Favorilere eklendi', {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+            });
+           const newFavs = [...state.favs,action.payload]
+      writeFavsToLocalStorage({...state,favs:newFavs})
+      return({...state,favs:newFavs})
+        }else{
+          toast.error('Ekli olan bir öğeyi tekrar ekleyemezsiniz', {
+            position: "top-right",
+            autoClose: 1000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+            });
+          return state;
+        }
+     
     case FAV_REMOVE:
-      return state;
-
+      const filteredFavs = state.favs.filter(fav=> fav.id !== action.payload);
+      writeFavsToLocalStorage({...state,favs:filteredFavs})
+      return {...state,favs:filteredFavs};
     case FETCH_SUCCESS:
-      return state;
+      return {...state,loading:false, current: action.payload,error: '' }
 
     case FETCH_LOADING:
-      return state;
+      return {...state,loading:true,current:null, error: ''};
 
     case FETCH_ERROR:
-      return state;
+      return {...state,loading:true, error: action.payload};
 
     case GET_FAVS_FROM_LS:
-      return state;
+      return {...state, favs: readFavsFromLocalStorage() || []};
 
+    case RESET_LOCAL:
+      writeFavsToLocalStorage({...state,favs:[]})
+      return {...state,favs:[]};
     default:
       return state;
   }
